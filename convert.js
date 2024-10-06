@@ -1,5 +1,3 @@
-
-
 // Function to get user's timezone based on IP
 async function getUserTimezone() {
     try {
@@ -483,6 +481,7 @@ function getCurrencyCode(timezone) {
         "Europe/Vatican": "EUR",
         "America/Caracas": "VES",
         "Asia/Hanoi": "VND",
+        "Asia/Ho_Chi_Minh": "VND",
         "Pacific/Wallis": "XPF",
         "Asia/Aden": "YER",
         "Africa/Lusaka": "ZMW",
