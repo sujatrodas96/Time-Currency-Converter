@@ -258,21 +258,28 @@ async function populateTimezoneDropdown() {
 function setLocalTime() {
     const localTimeInput = document.getElementById('localTime');
     const errorMessage = document.getElementById('error-message');
+    const fromTimezoneSelect = document.getElementById('fromTimezone');
     
     try {
+        const selectedTimezone = fromTimezoneSelect.value;
         const currentDate = new Date();
-        const hours = currentDate.getHours().toString().padStart(2, '0');
-        const minutes = currentDate.getMinutes().toString().padStart(2, '0');
-        localTimeInput.value = `${hours}:${minutes}`;
+        const options = { 
+            timeZone: selectedTimezone,
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+        };
+        const timeString = currentDate.toLocaleTimeString('en-US', options);
+        localTimeInput.value = timeString;
     } catch (e) {
-        errorMessage.textContent = "Unable to detect your local time. Defaulting to 12:00.";
+        errorMessage.textContent = "Unable to set local time for the selected timezone. Defaulting to 12:00.";
         localTimeInput.value = "12:00";
     }
 }
 
 // Function to update local time continuously
 function updateLocalTime() {
-    setLocalTime(); // This will set the time to the current system time
+    setLocalTime(); // This will set the time to the current time in the selected timezone
     convertTime(); // This will update the converted time
 }
 
@@ -577,6 +584,10 @@ async function convertTime() {
 window.onload = async () => {
     await populateTimezoneDropdown();
     setLocalTime();
+    
+    // Add event listener for fromTimezone change
+    const fromTimezoneSelect = document.getElementById('fromTimezone');
+    fromTimezoneSelect.addEventListener('change', setLocalTime);
     
     // Update local time and convert time every second
     setInterval(updateLocalTime, 1000);
