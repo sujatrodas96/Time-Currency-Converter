@@ -173,7 +173,7 @@ async function populateTimezoneDropdown() {
             { name: "Portugal",  value: "Europe/Lisbon" },
             { name: "Qatar",  value: "Asia/Qatar" },
             { name: "Romania",  value: "Europe/Bucharest" },
-            { name: "Russia",  value: "Europe/Moscow"},
+            { name: "Russia(Moscow)",  value: "Europe/Moscow"},
             { name: "Russia",  value: "Asia/Vladivostok"},
             { name: "Russia",  value: "Asia/Yekaterinburg" },
             { name: "Rwanda",  value: "Africa/Kigali" },
@@ -336,6 +336,7 @@ function getCurrencyCode(timezone) {
         "Asia/Nicosia": "EUR",
         "Europe/Prague": "CZK",
         "Europe/Copenhagen": "DKK",
+        "Europe/Kiev": "UAH",
         "Africa/Djibouti": "DJF",
         "America/Dominica": "XCD",
         "America/Santo_Domingo": "DOP",
@@ -516,6 +517,10 @@ async function fetchExchangeRate(fromCurrency, toCurrency) {
 }
 
 // Updated convertTime function to include currency conversion
+// ... (previous code remains the same)
+
+// ... (previous code remains the same)
+
 async function convertTime() {
     const localTime = document.getElementById('localTime').value;
     const fromTimezone = document.getElementById('fromTimezone').value;
@@ -540,22 +545,35 @@ async function convertTime() {
         return;
     }
 
-    const currentDate = new Date();
-    currentDate.setHours(parseInt(hours), parseInt(minutes));
-
     try {
-        // Convert the time to the "from" timezone
-        const fromTime = new Date(currentDate.toLocaleString("en-US", { timeZone: fromTimezone }));
-        // Convert the time from "fromTimezone" to "toTimezone"
-        const convertedTimeObj = new Date(fromTime.toLocaleString("en-US", { timeZone: toTimezone }));
+        // Create two date objects
+        const fromDate = new Date();
+        const toDate = new Date();
 
-        // Format the converted time as HH:MM
-        const hoursConverted = convertedTimeObj.getHours().toString().padStart(2, '0');
-        const minutesConverted = convertedTimeObj.getMinutes().toString().padStart(2, '0');
+        // Set the time for both dates
+        fromDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        toDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+        // Get the time zone offsets
+        const fromOffset = getTimezoneOffset(fromTimezone, fromDate);
+        const toOffset = getTimezoneOffset(toTimezone, toDate);
+
+        // Calculate the time difference
+        const diffMinutes = toOffset - fromOffset;
+
+        // Apply the difference to the toDate
+        toDate.setMinutes(toDate.getMinutes() + diffMinutes);
+
+        // Format the converted time
+        const convertedTimeStr = toDate.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+        });
 
         // Display the converted time
         if (showtime) showtime.style.display = 'block';
-        if (convertedTime) convertedTime.innerHTML = `<h3>${toTimezone}: ${hoursConverted}:${minutesConverted}</h3>`;
+        if (convertedTime) convertedTime.innerHTML = `<h3>${toTimezone}: ${convertedTimeStr}</h3>`;
         
         // Get currency codes based on timezones
         const fromCurrency = getCurrencyCode(fromTimezone);
@@ -579,6 +597,15 @@ async function convertTime() {
         errorMessage.textContent = "Error converting time. Please check your inputs and try again.";
     }
 }
+
+function getTimezoneOffset(timeZone, date = new Date()) {
+    const tz = date.toLocaleString('en-US', { timeZone, timeStyle: 'long', hour12: false });
+    const dateString = date.toLocaleString('en-US', { timeStyle: 'long', hour12: false });
+    const diff = new Date('1970-01-01T' + tz.split(' ')[0] + 'Z')
+               - new Date('1970-01-01T' + dateString.split(' ')[0] + 'Z');
+    return diff / 60000;
+}
+
 
 // Populate the timezones when the page loads, set local time, and start updating
 window.onload = async () => {
