@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timezone Converter</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script type="text/javascript" src="convert.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Time & Currency Converter</h2>
+        <p>The Time and Currency Converter allows you to convert local time and check currency values for different countries based on your location.</p>
+        <div id="error-message" class="error"></div>
+        <label for="localTime">Your Local Time:</label>
+        <input type="time" id="localTime">
+        <label for="fromTimezone">From Country:</label>
+        <select id="fromTimezone">
+            <!-- Timezones will be populated here -->
+        </select>
+        <label for="toTimezone">To Country:</label>
+        <select id="toTimezone">
+            <!-- Timezones will be populated here -->
+        </select>
+        <button onclick="convertTime()">Convert Time</button>
+        <div class="result" id="showtime" style="display: none;">
+            <span id="convertedTime"></span>        
+        </div>
+        <div class="result" id="showcurrency" style="display: none;">
+            <span id="convertedCurrency"></span>        
+        </div>
+    </div>
+</body>
+</html>
