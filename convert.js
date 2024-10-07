@@ -255,32 +255,31 @@ async function populateTimezoneDropdown() {
     });
 }
 
+let manualTimeSet = false;
+
 function setLocalTime() {
     const localTimeInput = document.getElementById('localTime');
     const errorMessage = document.getElementById('error-message');
     const fromTimezoneSelect = document.getElementById('fromTimezone');
     
-    try {
-        const selectedTimezone = fromTimezoneSelect.value;
-        const currentDate = new Date();
-        const options = { 
-            timeZone: selectedTimezone,
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: false 
-        };
-        const timeString = currentDate.toLocaleTimeString('en-US', options);
-        localTimeInput.value = timeString;
-    } catch (e) {
-        errorMessage.textContent = "Unable to set local time for the selected timezone. Defaulting to 12:00.";
-        localTimeInput.value = "12:00";
+    // Only set the time if it hasn't been manually changed
+    if (!manualTimeSet) {
+        try {
+            const selectedTimezone = fromTimezoneSelect.value;
+            const currentDate = new Date();
+            const options = { 
+                timeZone: selectedTimezone,
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: false 
+            };
+            const timeString = currentDate.toLocaleTimeString('en-US', options);
+            localTimeInput.value = timeString;
+        } catch (e) {
+            errorMessage.textContent = "Unable to set local time for the selected timezone. Defaulting to 12:00.";
+            localTimeInput.value = "12:00";
+        }
     }
-}
-
-// Function to update local time continuously
-function updateLocalTime() {
-    setLocalTime(); // This will set the time to the current time in the selected timezone
-    convertTime(); // This will update the converted time
 }
 
 // Function to get currency code based on timezone
@@ -516,12 +515,8 @@ async function fetchExchangeRate(fromCurrency, toCurrency) {
     }
 }
 
-// Updated convertTime function to include currency conversion
-// ... (previous code remains the same)
-
-// ... (previous code remains the same)
-
-async function convertTime() {
+// Modify the convertTime function to accept an optional parameter
+async function convertTime(manualTimeChange = false) {
     const localTime = document.getElementById('localTime').value;
     const fromTimezone = document.getElementById('fromTimezone').value;
     const toTimezone = document.getElementById('toTimezone').value;
@@ -575,18 +570,21 @@ async function convertTime() {
         if (showtime) showtime.style.display = 'block';
         if (convertedTime) convertedTime.innerHTML = `<h3>${toTimezone}: ${convertedTimeStr}</h3>`;
         
-        // Get currency codes based on timezones
-        const fromCurrency = getCurrencyCode(fromTimezone);
-        const toCurrency = getCurrencyCode(toTimezone);
+        // Only fetch and display exchange rate if it's not a manual time change
+        if (!manualTimeChange) {
+            // Get currency codes based on timezones
+            const fromCurrency = getCurrencyCode(fromTimezone);
+            const toCurrency = getCurrencyCode(toTimezone);
 
-        // Fetch and display exchange rate
-        const exchangeRate = await fetchExchangeRate(fromCurrency, toCurrency);
-        if (exchangeRate) {
-            if (showcurrency) showcurrency.style.display = 'block';
-            if (convertedCurrency) convertedCurrency.innerHTML = `<h3>1 ${fromCurrency} = ${exchangeRate.toFixed(2)} ${toCurrency}</h3>`;
-        } else {
-            if (showcurrency) showcurrency.style.display = 'none';
-            errorMessage.textContent += " Unable to fetch currency conversion.";
+            // Fetch and display exchange rate
+            const exchangeRate = await fetchExchangeRate(fromCurrency, toCurrency);
+            if (exchangeRate) {
+                if (showcurrency) showcurrency.style.display = 'block';
+                if (convertedCurrency) convertedCurrency.innerHTML = `<h3>1 ${fromCurrency} = ${exchangeRate.toFixed(2)} ${toCurrency}</h3>`;
+            } else {
+                if (showcurrency) showcurrency.style.display = 'none';
+                errorMessage.textContent += " Unable to fetch currency conversion.";
+            }
         }
 
         // Clear any previous error message
@@ -598,6 +596,15 @@ async function convertTime() {
     }
 }
 
+// Function to update local time continuously
+function updateLocalTime() {
+    // Only update the time if it hasn't been manually changed
+    if (!manualTimeSet) {
+        setLocalTime();
+        convertTime(); // This will update the converted time
+    }
+}
+
 function getTimezoneOffset(timeZone, date = new Date()) {
     const tz = date.toLocaleString('en-US', { timeZone, timeStyle: 'long', hour12: false });
     const dateString = date.toLocaleString('en-US', { timeStyle: 'long', hour12: false });
@@ -606,15 +613,30 @@ function getTimezoneOffset(timeZone, date = new Date()) {
     return diff / 60000;
 }
 
-
-// Populate the timezones when the page loads, set local time, and start updating
+// Modify the window.onload function
 window.onload = async () => {
     await populateTimezoneDropdown();
     setLocalTime();
     
     // Add event listener for fromTimezone change
     const fromTimezoneSelect = document.getElementById('fromTimezone');
-    fromTimezoneSelect.addEventListener('change', setLocalTime);
+    fromTimezoneSelect.addEventListener('change', () => {
+        manualTimeSet = false; // Reset the manual flag when timezone changes
+        setLocalTime();
+        convertTime();
+    });
+    
+    // Add event listener for localTime input
+    const localTimeInput = document.getElementById('localTime');
+    localTimeInput.addEventListener('input', () => {
+        manualTimeSet = true; // Set the flag when user manually changes the time
+        convertTime(true);
+    });
+    
+    // Add event listener for localTime blur (when user clicks outside)
+    localTimeInput.addEventListener('blur', () => {
+        convertTime(true);
+    });
     
     // Update local time and convert time every second
     setInterval(updateLocalTime, 1000);
